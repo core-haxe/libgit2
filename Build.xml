@@ -1,5 +1,5 @@
 <xml>
-    <set name="lib_folder" value="${haxelib:hxLibGit2}/libgit2" />
+    <set name="lib_folder" value="${haxelib:libgit2}/libgit2" />
 
     <echo value="Using libgit2 from: ${lib_folder}" />
 
