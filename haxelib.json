@@ -1,0 +1,15 @@
+{
+    "version": "0.0.0",
+    "contributors": [
+        "haxeui",
+        "ianharrigan"
+    ],
+    "license": "MIT",
+    "tags": [],
+    "releasenote": "",
+    "dependencies": {},
+    "name": "libgit2",
+    "description": "",
+    "url": "",
+    "classPath": "src"
+}
