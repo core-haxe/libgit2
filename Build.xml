@@ -222,7 +222,6 @@
             <file name="${lib_folder}/deps/zlib/inffast.c" />
             <file name="${lib_folder}/deps/zlib/trees.c" />
 
-            <!--
             <file name="${lib_folder}/deps/pcre/pcre_globals.c" />
             <file name="${lib_folder}/deps/pcre/pcre_tables.c" />
             <file name="${lib_folder}/deps/pcre/pcre_newline.c" />
@@ -237,7 +236,6 @@
             <file name="${lib_folder}/deps/pcre/pcre_ord2utf8.c" />
             <file name="${lib_folder}/deps/pcre/pcre_valid_utf8.c" />
             <file name="${lib_folder}/deps/pcre/pcre_xclass.c" />
-            -->
         </files>
 
         <target id="haxe" tool="linker" toolid="exe" if="windows">
