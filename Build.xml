@@ -15,7 +15,7 @@
             <compilerflag value="-DGIT_HTTPS" />
             <compilerflag value="-DUSE_HTTPS=OpenSSL" />
             -->
-            <compilerflag value="-DGIT_WINHTTP" />
+            <compilerflag value="-DGIT_WINHTTP" if="windows"/>
             <compilerflag value="-DGIT_HTTPS" />
             <!--
             <compilerflag value="-DGIT_OPENSSL" />
@@ -190,6 +190,10 @@
             <file name="${lib_folder}/src/unix/map.c" />
             <file name="${lib_folder}/src/unix/realpath.c" />
         </files>
+        <target id="haxe" tool="linker" toolid="exe">
+            <lib name="-lz" />
+            <lib name="-lpcre" />
+        </target>
     </section>
 
     <section if="windows">
