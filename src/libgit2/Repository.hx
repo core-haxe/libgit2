@@ -1,5 +1,7 @@
 package libgit2;
 
+import cpp.SizeT;
+import haxe.io.Path;
 import cpp.RawPointer;
 import libgit2.RevWalk.SortFlags;
 import libgit2.externs.LibGit2;
@@ -24,14 +26,31 @@ static int credentialsCallback(git_cred ** cred, const char * url, const char * 
 @:access(libgit2.Signature)
 @:access(libgit2.Tree)
 @:access(libgit2.Remote)
+@:include("git2.h")
 class Repository extends Common {
     private var pointer:RawPointer<GitRepository> = null;
     
     public var path:String;
     
-    public var user:UserDetails = null;
+    private var _user:UserDetails = null;
+    public var user(get, set):UserDetails;
+    private function get_user():UserDetails {
+        return _user;
+    }
+    private function set_user(value:UserDetails):UserDetails {
+        _user = value;
+        if (_user == null) {
+            _currentUsername = null;
+            _currentPassword = null;
+        } else {
+            _currentUsername = _user.username;
+            _currentPassword = _user.password;
+        }
+        return value;
+    }
     
     public function open(path:String) {
+        path = Path.normalize(path);
         var r = LibGit2.git_repository_open(RawPointer.addressOf(pointer), path);
         checkError(r);
         
@@ -51,7 +70,7 @@ class Repository extends Common {
         }
         return walker;
     }
-    
+
     public function commits(spec:String = "HEAD~10"):CommitIterator {
         var walker = createWalker(SortFlags.Time | SortFlags.Topological);
         var it = new CommitIterator(this, walker.iterator(spec));
@@ -66,8 +85,9 @@ class Repository extends Common {
         return i;
     }
     
-    public function reference(name:String):Reference {
+    public function reference(name:String = "HEAD"):Reference {
         var ref = new Reference(this, name);
+        ref.lookup();
         return ref;
     }
     
@@ -153,10 +173,36 @@ class Repository extends Common {
     
     public function remote(name:String = "origin"):Remote {
         var r = new Remote(this);
+        r.user = this.user;
         r.lookup(name);
         return r;
     }
     
+    public function graphAheadBehind(branchName:String = null, fetch:Bool = true):{ahead:Int, behind:Int} {
+        if (branchName == null) {
+            var ref = reference();
+            branchName = ref.branchName;
+        }
+        if (fetch) {
+            var remote = this.remote("origin");
+            remote.fetch();
+        }
+
+        var localRef = this.reference("refs/heads/" + branchName);
+        var remoteRef = this.reference("refs/remotes/origin/" + branchName);
+        var localOid = localRef.oid;
+        var remoteOid = remoteRef.oid;
+
+        var ahead:SizeT = 0;
+        var behind:SizeT = 0;
+        var r = LibGit2.git_graph_ahead_behind(RawPointer.addressOf(ahead), RawPointer.addressOf(behind), this.pointer, localOid.pointer, remoteOid.pointer);
+        checkError(r);
+        return  {
+            ahead: ahead,
+            behind: behind
+        }
+    }
+
     private static var _currentUsername:String = null;
     private static var _currentPassword:String = null;
     public function push(remoteName:String = "origin", refSpec:String = "HEAD:refs/heads/master") {

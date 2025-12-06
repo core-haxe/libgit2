@@ -10,6 +10,7 @@ class Remote extends Common {
     private var pointer:RawPointer<GitRemote> = null;
     
     public var repository:Repository;
+    public var user:UserDetails;
     
     public function new(repository:Repository) {
         super();
@@ -21,6 +22,31 @@ class Remote extends Common {
         checkError(r);
     }
     
+    public function fetch() {
+        var remoteCallbacks = GitRemoteCallbacks.alloc();
+        var r = LibGit2.git_remote_init_callbacks(RawPointer.addressOf(remoteCallbacks), LibGit2RemoteCallbacks.REMOTE_CALLBACKS_VERSION);
+        var error = checkError(r, false);
+        if (error != null) {
+            throw error;
+        }
+
+        if (user != null) {
+            remoteCallbacks.credentials = untyped __cpp__("&libgit2::Repository_obj::credentialsCallback");
+        }
+
+        var fetchOptions = GitFetchOptions.alloc();
+        r = LibGit2.git_fetch_options_init(RawPointer.addressOf(fetchOptions), LibGit2FetchOptions.FETCH_OPTIONS_VERSION);
+        var error = checkError(r, false);
+        if (error != null) {
+            throw error;
+        }
+
+        fetchOptions.callbacks = remoteCallbacks;
+
+        var r = LibGit2.git_remote_fetch(pointer, null, RawPointer.addressOf(fetchOptions), null);
+        checkError(r);
+    }
+
     public function disconnect() {
         LibGit2.git_remote_disconnect(pointer);
     }

@@ -152,6 +152,7 @@
             <file name="${lib_folder}/src/settings.c" />
             <file name="${lib_folder}/src/reset.c" />
             <file name="${lib_folder}/src/status.c" />
+            <file name="${lib_folder}/src/graph.c" />
             
             <file name="${lib_folder}/src/xdiff/xmerge.c" />
             <file name="${lib_folder}/src/xdiff/xutils.c" />

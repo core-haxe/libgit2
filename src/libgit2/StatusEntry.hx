@@ -38,6 +38,45 @@ class StatusEntry extends Common {
         return _status;
     }
 
+    public var file(get, null):DiffFile;
+    private function get_file():DiffFile {
+        return diff().fileNew;
+    }
+
+    public var statusString(get, null):String;
+    private function get_statusString():String {
+        if (status == Current) {
+            return "Current";
+        } else if (status == IndexNew) {
+            return "IndexNew";
+        } else if (status == IndexModified) {
+            return "IndexModified";
+        } else if (status == IndexDeleted) {
+            return "IndexDeleted";
+        } else if (status == IndexRenamed) {
+            return "IndexRenamed";
+        } else if (status == IndexTypeChange) {
+            return "IndexTypeChange";
+        } else if (status == WorkingTreeNew) {
+            return "WorkingTreeNew";
+        } else if (status == WorkingTreeModified) {
+            return "WorkingTreeModified";
+        } else if (status == WorkingTreeDeleted) {
+            return "WorkingTreeDeleted";
+        } else if (status == WorkingTreeTypeChange) {
+            return "WorkingTreeTypeChange";
+        } else if (status == WorkingTreeRenamed) {
+            return "WorkingTreeRenamed";
+        } else if (status == WorkingTreeUnreadable) {
+            return "WorkingTreeUnreadable";
+        } else if (status == Ignored) {
+            return "Ignored";
+        } else if (status == Conflicted) {
+            return "Conflicted";
+        }
+        return "Unknown";
+    }
+
     public var isCurrent(get, null):Bool;
     private function get_isCurrent():Bool {
         return (status & Current == Current);

@@ -22,6 +22,7 @@ extern class LibGit2 {
     @:native("giterr_last")                         public static function giterr_last():ConstStar<GitError>;
     
     @:native("git_repository_open")                 public static function git_repository_open(out:RawPointer<RawPointer<GitRepository>>, path:ConstCharStar):Int;
+    @:native("git_repository_head")                 public static function git_repository_head(out:RawPointer<RawPointer<GitReference>>, repo:RawPointer<GitRepository>):Int;
     @:native("git_repository_free")                 public static function git_repository_free(repo:RawPointer<GitRepository>):Void;
     @:native("git_repository_index")                public static function git_repository_index(out:RawPointer<RawPointer<GitIndex>>, repo:RawPointer<GitRepository>):Int;
     @:native("git_repository_state_cleanup")        public static function git_repository_state_cleanup(repo:RawPointer<GitRepository>):Int;
@@ -33,6 +34,11 @@ extern class LibGit2 {
     @:native("git_index_free")                      public static function git_index_free(index:RawPointer<GitIndex>):Void;
 
     @:native("git_reference_name_to_id")            public static function git_reference_name_to_id(out:RawPointer<GitOid>, repo:RawPointer<GitRepository>, name:ConstCharStar):Int;
+    @:native("git_reference_lookup")                public static function git_reference_lookup(out:RawPointer<RawPointer<GitReference>>, repo:RawPointer<GitRepository>, name:ConstCharStar):Int;
+    @:native("git_reference_is_branch")             public static function git_reference_is_branch(ref:RawPointer<GitReference>):Bool;
+    @:native("git_reference_free")                  public static function git_reference_free(ref:RawPointer<GitReference>):Void;
+
+    @:native("git_branch_name")                     public static function git_branch_name(out:RawPointer<ConstCharStar>, ref:RawPointer<GitReference>):Int;
     
     @:native("git_revwalk_new")                     public static function git_revwalk_new(out:RawPointer<RawPointer<GitRevWalk>>, repo:RawPointer<GitRepository>):Int;
     @:native("git_revwalk_sorting")                 public static function git_revwalk_sorting(walk:RawPointer<GitRevWalk>, sort_mode:Int):Void;
@@ -77,8 +83,11 @@ extern class LibGit2 {
     @:native("git_remote_init_callbacks")           public static function git_remote_init_callbacks(callbacks:RawPointer<GitRemoteCallbacks>, version:Int):Int;
     @:native("git_remote_name")                     public static function git_remote_name(remote:RawPointer<GitRemote>):ConstCharStar;
     @:native("git_remote_get_push_refspecs")        public static function git_remote_get_push_refspecs(array:RawPointer<GitStrArray>, remote:RawPointer<GitRemote>):Int;
+    @:native("git_remote_fetch")                    public static function git_remote_fetch(remote:RawPointer<GitRemote>, refspecs:RawPointer<GitStrArray>, opts:RawPointer<GitFetchOptions>, reflog_message:ConstCharStar):Int;
 
     @:native("git_push_options_init")               public static function git_push_options_init(options:RawPointer<GitPushOptions>, version:Int):Int;
+
+    @:native("git_fetch_options_init")              public static function git_fetch_options_init(options:RawPointer<GitFetchOptions>, version:Int):Int;
 
     @:native("git_status_options_init")             public static function git_status_options_init(options:RawPointer<GitStatusOptions>, version:Int):Int;
     @:native("git_status_list_new")                 public static function git_status_list_new(out:RawPointer<RawPointer<GitStatusList>>, repo:RawPointer<GitRepository>, options:RawPointer<GitStatusOptions>):Int;
@@ -91,6 +100,7 @@ extern class LibGit2 {
     @:native("git_oid_tostr")                       public static function git_oid_tostr(out:CharStar, n:Int, oid:RawPointer<GitOid>):Void;
     @:native("git_strarray_free")                   public static function git_strarray_free(out:CharStar, n:Int, oid:RawPointer<GitOid>):Void;
     
+    @:native("git_graph_ahead_behind")              public static function git_graph_ahead_behind(ahead:RawPointer<cpp.SizeT>, behind:RawPointer<cpp.SizeT>, repo:RawPointer<GitRepository>, local:RawPointer<GitOid>, upstream:RawPointer<GitOid>):Int;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -129,6 +139,11 @@ class LibGit2PushOptions {
 }
 
 @:headerInclude("git2.h")
+class LibGit2FetchOptions {
+    public static var FETCH_OPTIONS_VERSION                     = untyped __cpp__("GIT_FETCH_OPTIONS_VERSION");
+}
+
+@:headerInclude("git2.h")
 class LibGit2StatusOptions {
     public static var STATUS_OPTIONS_VERSION                    = untyped __cpp__("GIT_STATUS_OPTIONS_VERSION");
 }
@@ -151,6 +166,98 @@ class LibGit2Status {
     public static var STATUS_CONFLICTED                         = untyped __cpp__("GIT_STATUS_CONFLICTED");
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+@:headerInclude("git2.h")
+@:unreflective
+@:native("git_status_show_t")
+extern enum abstract LibGit2StatusShowT(LibGit2StatusShowTImpl) {
+    @:native("GIT_STATUS_SHOW_INDEX_AND_WORKDIR") var SHOW_INDEX_AND_WORKDIR;
+    @:native("GIT_STATUS_SHOW_INDEX_ONLY") var SHOW_INDEX_ONLY;
+    @:native("GIT_STATUS_SHOW_WORKDIR_ONLY") var SHOW_WORKDIR_ONLY;
+    @:native("GIT_STATUS_SHOW_INDEX_THEN_WORKDIR") var SHOW_INDEX_THEN_WORKDIR;
+}
+
+@:headerInclude("git2.h")
+@:unreflective
+@:native("cpp::Struct<git_status_show_t, cpp::EnumHandler>")
+extern class LibGit2StatusShowTImpl {
+
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*
+@:headerInclude("git2.h")
+@:unreflective
+@:native("git_status_opt_t")
+extern enum abstract LibGit2StatusOptT(LibGit2StatusOptTImpl) {
+
+    @:from
+    static inline function fromInt(n:Int):LibGit2StatusOptT {
+        return cast n;
+    }
+
+    @:to
+    inline function toInt():Int {
+        return cast this;
+    }
+
+    @:native("GIT_STATUS_OPT_INCLUDE_UNTRACKED") var INCLUDE_UNTRACKED;
+    @:native("GIT_STATUS_OPT_INCLUDE_IGNORED") var INCLUDE_IGNORED;
+    @:native("GIT_STATUS_OPT_INCLUDE_UNMODIFIED") var INCLUDE_UNMODIFIED;
+    @:native("GIT_STATUS_OPT_EXCLUDE_SUBMODULES") var EXCLUDE_SUBMODULES;
+    @:native("GIT_STATUS_OPT_RECURSE_UNTRACKED_DIRS") var RECURSE_UNTRACKED_DIRS;
+    @:native("GIT_STATUS_OPT_DISABLE_PATHSPEC_MATCH") var DISABLE_PATHSPEC_MATCH;
+    @:native("GIT_STATUS_OPT_RECURSE_IGNORED_DIRS") var RECURSE_IGNORED_DIRS;
+    @:native("GIT_STATUS_OPT_RENAMES_HEAD_TO_INDEX") var RENAMES_HEAD_TO_INDEX;
+    @:native("GIT_STATUS_OPT_RENAMES_INDEX_TO_WORKDIR") var RENAMES_INDEX_TO_WORKDIR;
+    @:native("GIT_STATUS_OPT_SORT_CASE_SENSITIVELY") var SORT_CASE_SENSITIVELY;
+    @:native("GIT_STATUS_OPT_SORT_CASE_INSENSITIVELY") var SORT_CASE_INSENSITIVELY;
+    @:native("GIT_STATUS_OPT_RENAMES_FROM_REWRITES") var RENAMES_FROM_REWRITES;
+    @:native("GIT_STATUS_OPT_NO_REFRESH") var NO_REFRESH;
+    @:native("GIT_STATUS_OPT_UPDATE_INDEX") var UPDATE_INDEX;
+    @:native("GIT_STATUS_OPT_INCLUDE_UNREADABLE") var INCLUDE_UNREADABLE;
+    @:native("GIT_STATUS_OPT_INCLUDE_UNREADABLE_AS_UNTRACKED") var INCLUDE_UNREADABLE_AS_UNTRACKED;
+
+    @:op(A | B) static inline function or(a:LibGit2StatusOptT, b:LibGit2StatusOptT):LibGit2StatusOptT {
+        return a.toInt() | b.toInt();
+    }
+
+}
+
+@:headerInclude("git2.h")
+@:unreflective
+@:native("cpp::Struct<git_status_opt_t, cpp::EnumHandler>")
+extern class LibGit2StatusOptTImpl {
+
+}
+*/
+
+@:headerInclude("git2.h")
+@:unreflective
+class LibGit2StatusOpt {
+    public static var INCLUDE_UNTRACKED:Int = untyped __cpp__("GIT_STATUS_OPT_INCLUDE_UNTRACKED");
+    public static var INCLUDE_IGNORED:Int = untyped __cpp__("GIT_STATUS_OPT_INCLUDE_IGNORED");
+    public static var INCLUDE_UNMODIFIED:Int = untyped __cpp__("GIT_STATUS_OPT_INCLUDE_UNMODIFIED");
+    public static var EXCLUDE_SUBMODULES:Int = untyped __cpp__("GIT_STATUS_OPT_EXCLUDE_SUBMODULES");
+    public static var RECURSE_UNTRACKED_DIRS:Int = untyped __cpp__("GIT_STATUS_OPT_RECURSE_UNTRACKED_DIRS");
+    public static var DISABLE_PATHSPEC_MATCH:Int = untyped __cpp__("GIT_STATUS_OPT_DISABLE_PATHSPEC_MATCH");
+    public static var RECURSE_IGNORED_DIRS:Int = untyped __cpp__("GIT_STATUS_OPT_RECURSE_IGNORED_DIRS");
+    public static var RENAMES_HEAD_TO_INDEX:Int = untyped __cpp__("GIT_STATUS_OPT_RENAMES_HEAD_TO_INDEX");
+    public static var RENAMES_INDEX_TO_WORKDIR:Int = untyped __cpp__("GIT_STATUS_OPT_RENAMES_INDEX_TO_WORKDIR");
+    public static var SORT_CASE_SENSITIVELY:Int = untyped __cpp__("GIT_STATUS_OPT_SORT_CASE_SENSITIVELY");
+    public static var SORT_CASE_INSENSITIVELY:Int = untyped __cpp__("GIT_STATUS_OPT_SORT_CASE_INSENSITIVELY");
+    public static var RENAMES_FROM_REWRITES:Int = untyped __cpp__("GIT_STATUS_OPT_RENAMES_FROM_REWRITES");
+    public static var NO_REFRESH:Int = untyped __cpp__("GIT_STATUS_OPT_NO_REFRESH");
+    public static var UPDATE_INDEX:Int = untyped __cpp__("GIT_STATUS_OPT_UPDATE_INDEX");
+    public static var INCLUDE_UNREADABLE:Int = untyped __cpp__("GIT_STATUS_OPT_INCLUDE_UNREADABLE");
+    public static var INCLUDE_UNREADABLE_AS_UNTRACKED:Int = untyped __cpp__("GIT_STATUS_OPT_INCLUDE_UNREADABLE_AS_UNTRACKED");
+}
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -229,6 +336,17 @@ extern class GitDiffFile {
 @:structAccess
 @:native("git_index")
 extern class GitIndex {
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+@:include("git2.h")
+@:unreflective
+@:structAccess
+@:native("git_reference")
+extern class GitReference {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -408,13 +526,30 @@ extern class GitPushOptions {
 @:include("git2.h")
 @:unreflective
 @:structAccess
+@:native("git_fetch_options")
+extern class GitFetchOptions {
+    public static inline function alloc():GitFetchOptions {
+        return untyped __cpp__("{}");
+    }
+    
+    public var callbacks:GitRemoteCallbacks;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+@:include("git2.h")
+@:unreflective
+@:structAccess
 @:native("git_status_options")
 extern class GitStatusOptions {
+    public var show:LibGit2StatusShowT;
+    public var flags:Int;
     public static inline function alloc():GitStatusOptions {
         return untyped __cpp__("{}");
     }
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

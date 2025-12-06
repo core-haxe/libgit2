@@ -15,8 +15,11 @@ class StatusList extends Common {
         this.repository = repository;
 
         var statusOptions = GitStatusOptions.alloc();
+
         var r = LibGit2.git_status_options_init(RawPointer.addressOf(statusOptions), LibGit2StatusOptions.STATUS_OPTIONS_VERSION);
         checkError(r);
+        statusOptions.show = LibGit2StatusShowT.SHOW_INDEX_AND_WORKDIR;
+        statusOptions.flags = LibGit2StatusOpt.INCLUDE_UNTRACKED | LibGit2StatusOpt.RECURSE_UNTRACKED_DIRS | LibGit2StatusOpt.DISABLE_PATHSPEC_MATCH;
 
         var r = LibGit2.git_status_list_new(RawPointer.addressOf(pointer), repository.pointer, RawPointer.addressOf(statusOptions));
         checkError(r);
